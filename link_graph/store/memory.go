@@ -13,4 +13,7 @@ type InMemoryGraph struct {
 
 	links map[uuid.UUID]*graph.Link
 	edges map[uuid.UUID]*graph.Edge
+
+	linkURLIndex map[string]*graph.Link
+	linkEdgeMap  map[uuid.UUID]edgeList
 }
