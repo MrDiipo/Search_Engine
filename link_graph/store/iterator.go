@@ -34,3 +34,34 @@ func (i *linkIterator) Error() error {
 func (i *linkIterator) Close() error {
 	return nil
 }
+
+type edgeIterator struct {
+	s        *InMemoryGraph
+	edges    []*graph.Edge
+	curIndex int
+}
+
+func (e edgeIterator) Next() bool {
+
+	if e.curIndex >= len(e.edges) {
+		return false
+	}
+	e.curIndex++
+	return true
+}
+
+func (e edgeIterator) Error() error {
+	return nil
+}
+
+func (e edgeIterator) Close() error {
+	return nil
+}
+
+func (e edgeIterator) Edge() *graph.Edge {
+	e.s.mu.RLock()
+	edge := new(graph.Edge)
+	*edge = *e.edges[e.curIndex-1]
+	e.s.mu.Unlock()
+	return edge
+}

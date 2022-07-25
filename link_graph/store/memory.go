@@ -116,6 +116,22 @@ func (s *InMemoryGraph) Links(fromID, toID uuid.UUID, retrievedBefore time.Time)
 
 func (s *InMemoryGraph) Edges(fromID, toID uuid.UUID, updatedBefore time.Time) (graph.EdgeIterator, error) {
 
+	from, to := fromID.String(), toID.String()
+	s.mu.RLock()
+	var list []*graph.Edge
+
+	for linkID := range s.links {
+		if id := linkID.String(); id < from || id >= to {
+			continue
+		}
+		for _, edgeID := range s.linkEdgeMap[linkID] {
+			if edge := s.edges[edgeID]; edge.UpdatedAt.Before(updatedBefore) {
+				list = append(list, edge)
+			}
+		}
+		s.mu.RUnlock()
+	}
+	return &edgeIterator{s: s, edges: list}, nil
 }
 
 func (s *InMemoryGraph) RemoveStaleEdges(fromID, toID uuid.UUID, updatedBefore time.Time) error {
