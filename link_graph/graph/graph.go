@@ -47,12 +47,22 @@ type Edge struct {
 }
 
 type Graph interface {
+	// UpsertLink creates a new Link or update an existing link
 	UpsertLink(link *Link) error
+	// FindLink looks up s link by its ID.
 	FindLink(id uuid.UUID) (*Link, error)
 
+	// UpsertEdge creates a new edge or updates an existing edge
 	UpsertEdge(edge *Edge) error
+	// RemoveStaleEdges removes any edge that originates from the specified
+	// link ID and was updated before the specified timestamp.
 	RemoveStaleEdges(fromID uuid.UUID, updateBefore time.Time) error
 
+	// Links returns an iterator for the set of links whose IDs belong to the
+	// [fromID, toID) range and were retrieved before the provided timestamp.
 	Links(fromID, toID uuid.UUID, retrievedBefore time.Time) (LinkIterator, error)
+	// Edges returns an iterator for the set of edges whose source vertex IDs
+	// belong to the [fromID, toID) range and were updated before the provided
+	// timestamp.
 	Edges(fromID, toID uuid.UUID, updatedBefore time.Time) (EdgeIterator, error)
 }
