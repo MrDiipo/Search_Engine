@@ -134,7 +134,7 @@ func (s *InMemoryGraph) Edges(fromID, toID uuid.UUID, updatedBefore time.Time) (
 	return &edgeIterator{s: s, edges: list}, nil
 }
 
-func (s *InMemoryGraph) RemoveStaleEdges(fromID, toID uuid.UUID, updatedBefore time.Time) error {
+func (s *InMemoryGraph) RemoveStaleEdges(fromID uuid.UUID, updatedBefore time.Time) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
