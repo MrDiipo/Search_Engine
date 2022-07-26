@@ -23,6 +23,8 @@ RETURNING id, updated_at`
 	linksInPartitionQuery = `SELECT id, url, retrieved_at FROM links WHERE id >= $1 AND id < $2 AND retrieved_at < $3`
 
 	edgesInPartitionQuery = `SELECT id, src, dst, updated_at FROM edges WHERE src >= $1 AND src < $2 AND updated_at < $3`
+
+	removeStaleEdgesQuery = `DELETE FROM edges WHERE src =$1 and updated_at < $2`
 )
 
 type CockroachDBGraph struct {
@@ -70,6 +72,22 @@ func (c *CockroachDBGraph) Links(fromID, toID uuid.UUID, accessedBefore time.Tim
 		return nil, xerrors.Errorf("links: %w", err)
 	}
 	return &linkIterator{rows: rows}, nil
+}
+
+func (c *CockroachDBGraph) Edges(fromID, toID uuid.UUID, updatedBefore time.Time) (graph.EdgeIterator, error) {
+	rows, err := c.db.Query(edgesInPartitionQuery, fromID, toID, updatedBefore.UTC())
+	if err != nil {
+		return nil, xerrors.Errorf("edges: %w", err)
+	}
+	return &edgeIterator{rows: rows}, nil
+}
+
+func (c *CockroachDBGraph) RemoveStaleEdges(fromID uuid.UUID, updatedBefore time.Time) error {
+	_, err := c.db.Exec(removeStaleEdgesQuery, fromID, updatedBefore.UTC())
+	if err != nil {
+		return xerrors.Errorf("remove stale edges: %w", err)
+	}
+	return nil
 }
 
 func isForeignKeyViolationError(err error) bool {
