@@ -1,4 +1,4 @@
-package store
+package memory
 
 import (
 	"Web_Crawler/link_graph/graph"
@@ -18,6 +18,16 @@ type InMemoryGraph struct {
 
 	linkURLIndex map[string]*graph.Link
 	linkEdgeMap  map[uuid.UUID]edgeList
+}
+
+// NewInMemoryGraph creates a new in-memory link graph.
+func NewInMemoryGraph() *InMemoryGraph {
+	return &InMemoryGraph{
+		links:        make(map[uuid.UUID]*graph.Link),
+		edges:        make(map[uuid.UUID]*graph.Edge),
+		linkURLIndex: make(map[string]*graph.Link),
+		linkEdgeMap:  make(map[uuid.UUID]edgeList),
+	}
 }
 
 // UpsertLink creates a new link or updates an existing link.

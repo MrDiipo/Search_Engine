@@ -1,6 +1,8 @@
-package store
+package memory
 
-import "Web_Crawler/link_graph/graph"
+import (
+	"Web_Crawler/link_graph/graph"
+)
 
 type linkIterator struct {
 	s *InMemoryGraph
