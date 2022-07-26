@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"Web_Crawler/link_graph/graph"
+	"Web_Crawler/linkgraph/graph"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"sync"

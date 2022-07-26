@@ -1,7 +1,7 @@
 package cockroachdb
 
 import (
-	"Web_Crawler/link_graph/graph"
+	"Web_Crawler/linkgraph/graph"
 	"database/sql"
 	"golang.org/x/xerrors"
 )
