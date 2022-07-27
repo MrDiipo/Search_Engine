@@ -1,7 +1,7 @@
 package cockroachdb
 
 import (
-	"Web_Crawler/linkgraph/graph"
+	"Search_Engine/linkgraph/graph"
 	"database/sql"
 	"github.com/google/uuid"
 	"github.com/lib/pq"

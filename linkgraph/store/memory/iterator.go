@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"Web_Crawler/linkgraph/graph"
+	"Search_Engine/linkgraph/graph"
 )
 
 type linkIterator struct {

@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"Web_Crawler/linkgraph/graph"
+	"Search_Engine/linkgraph/graph"
 	"gopkg.in/check.v1"
 	"testing"
 )
