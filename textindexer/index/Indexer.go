@@ -15,7 +15,7 @@ type QueryType uint8
 type Query struct {
 	Type       QueryType
 	Expression string
-	Offset     string
+	Offset     uint64
 }
 
 type Iterator interface {
