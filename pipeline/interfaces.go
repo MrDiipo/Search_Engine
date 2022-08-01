@@ -50,4 +50,8 @@ type StageRunner interface {
 type Source interface {
 	//Next fetches the next payload from the source. Returns false if no items exists
 	Next() bool
+	// Payload returns the next payload to be processed
+	Payload() Payload
+	// Error returns the last error observed by the source
+	Error() error
 }
