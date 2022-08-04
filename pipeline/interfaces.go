@@ -36,7 +36,7 @@ type StageParams interface {
 	Output() chan<- Payload
 	// Error returns a channel for writing the errors encountered in a stage
 	// while processing payloads.
-	Error() chan<- Payload
+	Error() chan<- error
 }
 
 // StageRunner is implemented by types that can be strung together to
@@ -49,9 +49,14 @@ type StageRunner interface {
 
 type Source interface {
 	//Next fetches the next payload from the source. Returns false if no items exists
-	Next() bool
+	Next(context.Context) bool
 	// Payload returns the next payload to be processed
 	Payload() Payload
 	// Error returns the last error observed by the source
 	Error() error
+}
+
+type Sink interface {
+	// Consume processes a payload that has been emitted out of the pipeline
+	Consume(context.Context, Payload) error
 }
