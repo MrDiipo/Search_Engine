@@ -59,7 +59,7 @@ func (p *Pipeline) Process(ctx context.Context, source Source, sink Sink) error 
 	// Allocate channels for wiring together the source, the pipeline stages
 	// and the output sink. The output of the i_the stage is used as an input
 	// for the i+1_the stage. We need to allocate one extra channel than the number
-	// of stages so we can wire the source/sink.
+	// of stages, so we can wire the source/sink.
 	stageCh := make([]chan Payload, len(p.stages)+1)
 	errCh := make(chan error, len(p.stages)+2)
 	for i := 0; i < len(stageCh); i++ {
