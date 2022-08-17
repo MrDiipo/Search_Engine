@@ -1,6 +1,0 @@
-make --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/home/oladipupo/go/src/Search_Engine'
-make: Leaving directory '/home/oladipupo/go/src/Search_Engine'
- 
-make: *** No targets.  Stop.
-
