@@ -11,8 +11,6 @@ import (
 )
 
 var (
-	_ pipeline.Payload = (*crawlerPayload)(nil)
-
 	payloadPool = sync.Pool{
 		New: func() interface{} {
 			return new(crawlerPayload)
