@@ -42,4 +42,5 @@ func (te *textExtractor) Process(ctx context.Context, p pipeline.Payload) (pipel
 		policy.SanitizeReader(&payload.RawContent).String(), " ",
 	)))
 	te.policyPool.Put(policy)
+	return payload, nil
 }
