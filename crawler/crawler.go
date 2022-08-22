@@ -60,11 +60,12 @@ type Crawler struct {
 }
 
 // NewCrawler returns a new crawler instance.
-func NewCrawler(cfg Config) *Crawler{
+func NewCrawler(cfg Config) *Crawler {
 	return &Crawler{
 		p: assembleCrawlerPipeline(cfg),
 	}
 }
+
 // assembleCrawlerPipeline creates the various stages of a crawler pipeline
 // using the options in cfg and assembles them into a pipeline instance.
 func assembleCrawlerPipeline(cfg Config) *pipeline.Pipeline {
@@ -74,7 +75,7 @@ func assembleCrawlerPipeline(cfg Config) *pipeline.Pipeline {
 		), pipeline.NewFIFO(newLinkExtractor(cfg.PrivateNetworkDetector)),
 		pipeline.NewFIFO(newTextExtractor()),
 		pipeline.Broadcast(newGraphUpdater(cfg.Graph),
-			newTextIndexer(cfg.Indexer))
+			newTextIndexer(cfg.Indexer)))
 }
 
 type linkSource struct {
