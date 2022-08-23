@@ -13,7 +13,7 @@ type Aggregator interface {
 	Get() interface{}
 	// Aggregate updates the aggregator's value based on the provided value
 	Aggregate(val interface{})
-	// Delta returns the change int the aggregator's value since the last call to delta
+	// Delta returns the change int the aggregator's value since the last call to Delta or Set
 	Delta() interface{}
 }
 
