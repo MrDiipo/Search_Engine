@@ -58,6 +58,67 @@ func (a *Float64Accumulator) Aggregate(v interface{}) {
 	}
 }
 
+func (a *Float64Accumulator) Delta() interface{} {
+	for {
+		curSum := loadFloat64(&a.curSum)
+		prevSum := loadFloat64(&a.prevSum)
+		if atomic.CompareAndSwapUint64(
+			(*uint64)(unsafe.Pointer(&a.prevSum)),
+			math.Float64bits(prevSum),
+			math.Float64bits(curSum),
+		) {
+			return curSum - prevSum
+		}
+	}
+}
+
 func loadFloat64(f *float64) float64 {
 	return math.Float64frombits(atomic.LoadUint64((*uint64)(unsafe.Pointer(f))))
+}
+
+// IntAccumulator implements a concurrent-safe accumulator for int values
+type IntAccumulator struct {
+	prevSum int64
+	curSum  int64
+}
+
+// Type implements bspgrah.Aggregator
+func (a *IntAccumulator) Type() string {
+	return "IntAccumulator"
+}
+
+// Get return the current value of the accumulator
+func (a *IntAccumulator) Get() interface{} {
+	return int(atomic.LoadInt64(&a.curSum))
+}
+
+// Set the current value of the accumulator
+func (a *IntAccumulator) Set(v interface{}) {
+	for v64 := int64(v.(int)); ; {
+		oldCur := a.curSum
+		oldPrev := a.prevSum
+		swappedCur := atomic.CompareAndSwapInt64(&a.curSum, oldCur, v64)
+		swappedPrev := atomic.CompareAndSwapInt64(&a.prevSum, oldPrev, v64)
+
+		if swappedCur && swappedPrev {
+			return
+		}
+	}
+}
+
+// Aggregate adds a int value to the accumulator.
+func (a *IntAccumulator) Aggregate(v interface{}) {
+	_ = atomic.AddInt64(&a.curSum, int64(v.(int)))
+}
+
+// Delta returns the delta change in the accumulator value since the last time
+// it was invoked and the last time it was set
+func (a *IntAccumulator) Delta() interface{} {
+	for {
+		curSum := atomic.LoadInt64(&a.curSum)
+		prevSum := atomic.LoadInt64(&a.prevSum)
+		if atomic.CompareAndSwapInt64(&a.prevSum, prevSum, curSum) {
+			return int(curSum - prevSum)
+		}
+	}
 }

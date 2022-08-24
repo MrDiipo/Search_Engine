@@ -2,8 +2,22 @@ package bspgraph
 
 import (
 	"Search_Engine/graphprocessing/bspgraph/message"
+	"errors"
 	"golang.org/x/xerrors"
 	"sync"
+)
+
+var (
+	// ErrUnknownEdgeSource is returned by AddEdge when the source vertex
+	// is not present in the graph
+	ErrUnknownEdgeSource = xerrors.New("source vertex is not part of the graph")
+	// ErrDestinationIsLocal is returned by Relayer instances to indicate
+	// that a message destination is actually owned the local graph
+	ErrDestinationIsLocal = xerrors.New("message destination is assigned to the local graph")
+	// ErrInvalidMessageDestination is returned by calls to SendMessage and
+	// BroadCastToNeighbors when the destination cannot be resolved to any
+	// (local or remote) vertex.
+	ErrInvalidMessageDestination = xerrors.New("invalid message destination")
 )
 
 // Edge represents a vertex in the graph
@@ -83,12 +97,13 @@ func (g *Graph) AddVertex(id string, initValue interface{}) {
 	v.SetValue(initValue)
 }
 
+// AddEdge inserts a directed edge from src to destination and annotates it with the
+// specified initialValue.
 func (g *Graph) AddEdge(srcID, dstID string, initialValue interface{}) error {
 	srcVert := g.vertices[srcID]
 	if srcVert == nil {
 		return xerrors.Errorf("create edge from %q to %q: %w", srcID, dstID, ErrUnknownEdgeSource)
 	}
-
 	srcVert.edges = append(srcVert.edges, &Edge{
 		dstID: dstID,
 		value: initialValue,
@@ -112,6 +127,49 @@ func NewGraph(cfg GraphConfig) (*Graph, error) {
 	}
 	g.startWorkers(cfg.ComputeWorkers)
 	return g, nil
+}
+
+// BroadcastToNeighbors is a helper function that broadcasts a single message
+// to each neighbor of a particular vertex. Messages are queued for delivery
+// and will be processed by recipients in the next super-step.
+func (g *Graph) BroadcastToNeighbors(v *Vertex, msg message.Message) error {
+	for _, e := range v.edges {
+		if err := g.SendMessage(e.dstID, msg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SendMessage  attemps to deliver a message to the vertex with the specified
+// destination ID. Messages are queued up for delivery and will be processed by
+// recipients in the next super-step.
+//
+// If the destination ID is not known in this graph, it might still be a valid ID for a vertex
+// that is owned by a remote graph instance. If the client has provided a Relayer when configuring the graph,
+// SendMessage will delegate message delivery to it.
+//
+// On the other hand. if no Relayer is defined or the configured RemoteMessageSender
+// returns a ErrDestinationIsLocal error, SendMessage wil first check  whether an UnknownVertexHandler
+// has been provided at configuration time and invoke it. Otherwise and ErrInvalidMessageDestination
+// is returned to the caller.
+func (g *Graph) SendMessage(dstID string, msg message.Message) error {
+	// If the vertex is known to the local graph instance, queue the message
+	// directly, so it can be delivered at the next superstep.
+	dstVert := g.vertices[dstID]
+	if dstVert != nil {
+		queueIndex := (g.superstep + 1) % 2
+		return dstVert.msgQueue[queueIndex].Enqueue(msg)
+	}
+	// The vertex is not known locally but might be known to a partition
+	// that is processed at another node. If a remote relayer has been
+	// configured,  delegate the message send operation to it.
+	if g.relayer != nil {
+		if err := g.relayer.Relay(dstID, msg); !errors.Is(err, ErrDestinationIsLocal) {
+			return err
+		}
+	}
+	return xerrors.Errorf("message cannot be delivered to %q: %w", dstID, ErrInvalidMessageDestination)
 }
 
 // startWorkers allocates the required channels and spins up runWorkers to
