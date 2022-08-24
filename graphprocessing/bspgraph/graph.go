@@ -5,6 +5,7 @@ import (
 	"errors"
 	"golang.org/x/xerrors"
 	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -129,6 +130,21 @@ func NewGraph(cfg GraphConfig) (*Graph, error) {
 	return g, nil
 }
 
+// RegisterAggregator adds an aggregator with the specified name into the graph.
+func (g *Graph) RegisterAggregator(name string, aggr Aggregator) { g.aggregators[name] = aggr }
+
+// Aggregator returns the aggregator with the specified name or nil if the aggregator
+// does not exist
+func (g *Graph) Aggregator(name string) Aggregator {
+	return g.aggregators[name]
+}
+
+// Aggregators returns a map of all currently registered aggregators where the key is the
+// aggregator's name
+func (g *Graph) Aggregators() map[string]Aggregator {
+	return g.aggregators
+}
+
 // BroadcastToNeighbors is a helper function that broadcasts a single message
 // to each neighbor of a particular vertex. Messages are queued for delivery
 // and will be processed by recipients in the next super-step.
@@ -172,6 +188,35 @@ func (g *Graph) SendMessage(dstID string, msg message.Message) error {
 	return xerrors.Errorf("message cannot be delivered to %q: %w", dstID, ErrInvalidMessageDestination)
 }
 
+// Superstep returns the current superstep value.
+func (g *Graph) Superstep() int { return g.superstep }
+
+// Step executes the next superstep and returns back the number of vertices
+// that were processed either because they were still active or because they
+// received a message.
+func (g *Graph) step() (int, error) {
+	g.activeInStep = 0
+	g.pendingInStep = int64(len(g.vertices))
+
+	// No work required.
+	if g.pendingInStep == 0 {
+		return 0, nil
+	}
+
+	for _, v := range g.vertices {
+		g.vertexCh <- v
+	}
+	// Block until worker pool has finished processing all vertices.
+	<-g.stepCompleteCh
+	// Dequeue any errors
+	var err error
+	select {
+	case err = <-g.errCh:
+	default: // no error available
+	}
+	return int(g.activeInStep), err
+}
+
 // startWorkers allocates the required channels and spins up runWorkers to
 // execute each super-step
 func (g *Graph) startWorkers(workers int) {
@@ -185,20 +230,30 @@ func (g *Graph) startWorkers(workers int) {
 	}
 }
 
+// stepWorker polls vertexCh for incoming vertices and executes the configured
+// ComputeFunc for each one. The worker automatically exits when vertexCh gets closed.
 func (g *Graph) stepWorker() {
+	for v := range g.vertexCh {
+		buffer := g.superstep % 2
+		if v.active || v.msgQueue[buffer].PendingMessage() {
+			_ = atomic.AddInt64(&g.activeInStep, 1)
+			v.active = true
+			if err := g.computeFn(g, v, v.msgQueue[buffer].Messages()); err != nil {
+				tryEmitError(g.errCh, xerrors.Errorf("running compute function for vertex %q failed: %w", v.ID(), err))
+			} else if err := v.msgQueue[buffer].DiscardMessages(); err != nil {
+				tryEmitError(g.errCh, xerrors.Errorf("discarding unprocessed messages for vertex %q failed: %w", v.ID(), err))
+			}
+		}
+		if atomic.AddInt64(&g.pendingInStep, -1) == 0 {
+			g.stepCompleteCh <- struct{}{}
+		}
+	}
+	g.wg.Done()
 }
 
-// RegisterAggregator adds an aggregator with the specified name into the graph.
-func (g *Graph) RegisterAggregator(name string, aggr Aggregator) { g.aggregators[name] = aggr }
-
-// Aggregator returns the aggregator with the specified name or nil if the aggregator
-// does not exist
-func (g *Graph) Aggregator(name string) Aggregator {
-	return g.aggregators[name]
-}
-
-// Aggregators returns a map of all currently registered aggregators where the key is the
-// aggregator's name
-func (g *Graph) Aggregators() map[string]Aggregator {
-	return g.aggregators
+func tryEmitError(errCh chan<- error, err error) {
+	select {
+	case errCh <- err: // enqueue error
+	default: // channel already contains another error
+	}
 }
