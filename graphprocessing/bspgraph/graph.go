@@ -98,6 +98,9 @@ func (g *Graph) AddVertex(id string, initValue interface{}) {
 	v.SetValue(initValue)
 }
 
+// Vertices returns the graph vertices as a map where the key is the vertex ID.
+func (g *Graph) Vertices() map[string]*Vertex { return g.vertices }
+
 // AddEdge inserts a directed edge from src to destination and annotates it with the
 // specified initialValue.
 func (g *Graph) AddEdge(srcID, dstID string, initialValue interface{}) error {

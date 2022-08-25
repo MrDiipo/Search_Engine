@@ -31,6 +31,9 @@ func patchEmptyCallbacks(e *ExecutorCallbacks) {
 	}
 }
 
+// ExecutorFactory is a function that creates new executor instance
+type ExecutorFactory func(*Graph, ExecutorCallbacks) *Executor
+
 // Executor wraps a Graph instance and provides an orchestration layer
 // for executing super-steps until an error occurs or an exit condition is met.
 // Clients can provide their own ExecutorCallbacks
