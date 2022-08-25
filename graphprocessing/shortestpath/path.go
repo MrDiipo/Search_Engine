@@ -130,7 +130,7 @@ func (c Calculator) findShortestPath(g *bspgraph.Graph, v *bspgraph.Vertex, msgI
 		}
 	}
 	// If a better path was found through this vertex, announce it
-	// to all neighbors so they can update their own scores.
+	// to all neighbors, so they can update their own scores.
 	st := v.Value().(*PathState)
 	if minDist < st.minDst {
 		st.minDst = minDist
