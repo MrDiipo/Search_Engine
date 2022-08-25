@@ -251,6 +251,28 @@ func (g *Graph) stepWorker() {
 	g.wg.Done()
 }
 
+// Reset the state of the graph
+func (g *Graph) Reset() error {
+	g.superstep = 0
+	for _, v := range g.vertices {
+		for i := 0; i < 2; i++ {
+			if err := v.msgQueue[i].Close(); err != nil {
+				return xerrors.Errorf("closing message queue #%d for vertex %v: %w", i, v.ID(), err)
+			}
+		}
+	}
+	g.vertices = make(map[string]*Vertex)
+	g.aggregators = make(map[string]Aggregator)
+	return nil
+}
+
+// Close shuts down the long-running go-routines
+func (g *Graph) Close() error {
+	close(g.vertexCh)
+	g.wg.Wait()
+	return g.Reset()
+}
+
 func tryEmitError(errCh chan<- error, err error) {
 	select {
 	case errCh <- err: // enqueue error
