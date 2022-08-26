@@ -109,7 +109,7 @@ type PathState struct {
 	prevInPath string
 }
 
-func (c Calculator) findShortestPath(g *bspgraph.Graph, v *bspgraph.Vertex, msgIt message.Iterator) error {
+func (c *Calculator) findShortestPath(g *bspgraph.Graph, v *bspgraph.Vertex, msgIt message.Iterator) error {
 	if g.Superstep() == 0 {
 		v.SetValue(&PathState{
 			minDst: int(math.MaxInt64),
