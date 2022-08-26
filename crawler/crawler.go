@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"Search_Engine/linkgraph/graph"
+	"Search_Engine/linkgraph/store/cockroachdb"
 	"Search_Engine/pipeline"
 	"Search_Engine/textindexer/index"
 	"context"
@@ -48,7 +49,7 @@ type Config struct {
 	// A URLGetter instance for fetching links.
 	URLGetter URLGetter
 	// A GraphUpdater instance for adding new link to the link graph.
-	Graph Graph
+	Graph cockroachdb.CockroachDBGraph
 	// A TextIndexer instance for indexing the content of each retrieved link.
 	Indexer Indexer
 	// The number of concurrent workers used for retrieving links

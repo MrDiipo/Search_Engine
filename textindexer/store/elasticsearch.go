@@ -119,7 +119,6 @@ func (i *ElasticSearchIndexer) Index(doc *index.Document) error {
 	if doc.LinkID == uuid.Nil {
 		return xerrors.Errorf("index: %w", index.ErrMissingLinkID)
 	}
-
 	var (
 		buf   bytes.Buffer
 		esDoc = makeEsDoc(doc)
