@@ -4,6 +4,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 option go_package = "generated/";
+//  protoc --go_out=. api.proto
 
 // Link describes a link in the linkgaph
 message Link {
