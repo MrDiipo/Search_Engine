@@ -146,7 +146,7 @@ type LinkGraphServer interface {
 	// Edges streams the set of edges in the specified ID range.
 	Edges(*Range, LinkGraph_EdgesServer) error
 	RemoveStaleEdges(context.Context, *RemoveStaleEdgesQuery) (*emptypb.Empty, error)
-	mustEmbedUnimplementedLinkGraphServer()
+	//mustEmbedUnimplementedLinkGraphServer()
 }
 
 // UnimplementedLinkGraphServer must be embedded to have forward compatible implementations.

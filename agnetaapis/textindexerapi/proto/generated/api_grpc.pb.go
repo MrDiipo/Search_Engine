@@ -107,7 +107,7 @@ type TextIndexerServer interface {
 	// UpdateScore updates the PageRank score for a document with the specified
 	// link ID.
 	UpdateScore(context.Context, *UpdateScoreRequest) (*emptypb.Empty, error)
-	mustEmbedUnimplementedTextIndexerServer()
+	//mustEmbedUnimplementedTextIndexerServer()
 }
 
 // UnimplementedTextIndexerServer must be embedded to have forward compatible implementations.
@@ -123,7 +123,8 @@ func (UnimplementedTextIndexerServer) Search(*Query, TextIndexer_SearchServer) e
 func (UnimplementedTextIndexerServer) UpdateScore(context.Context, *UpdateScoreRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateScore not implemented")
 }
-func (UnimplementedTextIndexerServer) mustEmbedUnimplementedTextIndexerServer() {}
+
+//func (UnimplementedTextIndexerServer) mustEmbedUnimplementedTextIndexerServer() {}
 
 // UnsafeTextIndexerServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to TextIndexerServer will

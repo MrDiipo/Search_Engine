@@ -2,7 +2,6 @@ package crawler
 
 import (
 	"Search_Engine/linkgraph/graph"
-	"Search_Engine/linkgraph/store/cockroachdb"
 	"Search_Engine/pipeline"
 	"Search_Engine/textindexer/index"
 	"context"
@@ -49,7 +48,7 @@ type Config struct {
 	// A URLGetter instance for fetching links.
 	URLGetter URLGetter
 	// A GraphUpdater instance for adding new link to the link graph.
-	Graph cockroachdb.CockroachDBGraph
+	Graph Graph
 	// A TextIndexer instance for indexing the content of each retrieved link.
 	Indexer Indexer
 	// The number of concurrent workers used for retrieving links
@@ -71,12 +70,17 @@ func NewCrawler(cfg Config) *Crawler {
 // using the options in cfg and assembles them into a pipeline instance.
 func assembleCrawlerPipeline(cfg Config) *pipeline.Pipeline {
 	return pipeline.New(
-		pipeline.FixedWorkerPool(newLinkFetcher(cfg.URLGetter, cfg.PrivateNetworkDetector),
+		pipeline.FixedWorkerPool(
+			newLinkFetcher(cfg.URLGetter, cfg.PrivateNetworkDetector),
 			cfg.FetchWorkers,
-		), pipeline.NewFIFO(newLinkExtractor(cfg.PrivateNetworkDetector)),
+		),
+		pipeline.NewFIFO(newLinkExtractor(cfg.PrivateNetworkDetector)),
 		pipeline.NewFIFO(newTextExtractor()),
-		pipeline.Broadcast(newGraphUpdater(cfg.Graph),
-			newTextIndexer(cfg.Indexer)))
+		pipeline.Broadcast(
+			newGraphUpdater(cfg.Graph),
+			newTextIndexer(cfg.Indexer),
+		),
+	)
 }
 
 type linkSource struct {
