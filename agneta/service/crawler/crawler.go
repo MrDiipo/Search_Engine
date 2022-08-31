@@ -1,4 +1,4 @@
-package service
+package crawler
 
 import (
 	"Search_Engine/agneta/partition"
