@@ -18,7 +18,7 @@ type URLGetter interface {
 // PrivateNetworkDetector is implemented by object that can detect whether
 // a host resolves to a private network address.
 type PrivateNetworkDetector interface {
-	isPrivate(host string) (bool, error)
+	IsPrivate(host string) (bool, error)
 }
 
 // Graph is implemented by object that can upsert links and edges into a link
@@ -83,6 +83,14 @@ func assembleCrawlerPipeline(cfg Config) *pipeline.Pipeline {
 	)
 }
 
+// Crawl iterates linkIt and send each link through the crawler pipeline
+// returning the total count of links that went through the pipeline.
+func (c *Crawler) Crawl(ctx context.Context, linkIt graph.LinkIterator) (int, error) {
+	sink := new(countingSink)
+	err := c.p.Process(ctx, &linkSource{linkIt: linkIt}, sink)
+	return sink.getCount(), err
+}
+
 type linkSource struct {
 	linkIt graph.LinkIterator
 }
@@ -91,7 +99,7 @@ func (ls *linkSource) Error() error {
 	return ls.linkIt.Error()
 }
 
-func (ls *linkSource) Next() bool {
+func (ls *linkSource) Next(ctx context.Context) bool {
 	return ls.linkIt.Next()
 }
 

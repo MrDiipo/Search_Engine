@@ -20,8 +20,10 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/juju/clock v1.0.2 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
-	github.com/kr/text v0.1.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/text v0.3.7 // indirect

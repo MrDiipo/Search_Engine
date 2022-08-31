@@ -41,8 +41,8 @@ func NewDetectorFromCIDRs(privateNetworkCIDRs ...string) (*Detector, error) {
 	return &Detector{privBlocks: blocks}, nil
 }
 
-// isPrivate returns true if address returns to a private network
-func (d *Detector) isPrivate(address string) (bool, error) {
+// IsPrivate returns true if address returns to a private network
+func (d *Detector) IsPrivate(address string) (bool, error) {
 	ip, err := net.ResolveIPAddr("ip", address)
 	if err != nil {
 		return false, err
