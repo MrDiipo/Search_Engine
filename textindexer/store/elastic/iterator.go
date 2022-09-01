@@ -1,7 +1,8 @@
-package store
+package elastic
 
 import (
 	"Search_Engine/textindexer/index"
+	"Search_Engine/textindexer/store/memindex"
 	"github.com/elastic/go-elasticsearch"
 )
 
@@ -35,7 +36,7 @@ func (it *esIterator) Next() bool {
 
 	// Do we need to fetch the next batch?
 	if it.rsIdx >= len(it.rs.Hits.HitList) {
-		it.searchReq["from"] = it.searchReq["from"].(uint64) + batchSize
+		it.searchReq["from"] = it.searchReq["from"].(uint64) + memindex.BatchSize
 		if it.rs, it.lastErr = runSearch(it.es, it.searchReq); it.lastErr != nil {
 			return false
 		}

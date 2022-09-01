@@ -1,4 +1,4 @@
-package store
+package elastic
 
 import (
 	"Search_Engine/textindexer/index"
@@ -87,7 +87,7 @@ type ElasticSearchIndexer struct {
 	refreshOpt func(*esapi.UpdateRequest)
 }
 
-// NewElasticSearchIndexer creates a text indexer that uses an in-memory
+// NewElasticSearchIndexer creates a text indexer that uses an in-memindex
 // bleve instance for indexing documents.
 func NewElasticSearchIndexer(esNodes []string, syncUpdates bool) (*ElasticSearchIndexer, error) {
 	cfg := elasticsearch.Config{

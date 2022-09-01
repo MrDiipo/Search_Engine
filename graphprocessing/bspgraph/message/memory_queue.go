@@ -2,7 +2,7 @@ package message
 
 import "sync"
 
-// inMemoryQueue implements the a queue that stores messages in memory
+// inMemoryQueue implements the a queue that stores messages in memindex
 // Messages can be enqueued concurrently but the returned iterator is not safe for
 // concurrent access
 type inMemoryQueue struct {

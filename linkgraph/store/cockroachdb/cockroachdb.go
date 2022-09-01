@@ -31,6 +31,18 @@ type CockroachDBGraph struct {
 	db *sql.DB
 }
 
+func NewCockroachDBGraph(dsn string) (*CockroachDBGraph, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+	return &CockroachDBGraph{db: db}, nil
+}
+
+func (c *CockroachDBGraph) Close() error {
+	return c.db.Close()
+}
+
 func (c *CockroachDBGraph) UpsertLink(link *graph.Link) error {
 	row := c.db.QueryRow(upsertLinkQuery, link.URL, link.RetrievedAt.UTC())
 	if err := row.Scan(&link.ID, &link.RetrievedAt); err != nil {

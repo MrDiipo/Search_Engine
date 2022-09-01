@@ -1,4 +1,4 @@
-package agneta
+package service
 
 import (
 	"context"

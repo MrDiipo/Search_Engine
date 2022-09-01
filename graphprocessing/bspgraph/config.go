@@ -9,7 +9,7 @@ import (
 // GraphConfig encapsulates the configuration options for creating graphs
 type GraphConfig struct {
 	// QueryFactory is used by the graph to create message queue instances
-	// for each vertex that is added o the graph. If not specified, the default in-memory
+	// for each vertex that is added o the graph. If not specified, the default in-memindex
 	// queue will be used instead.
 	QueueFactory message.QueueFactory
 	// ComputeFn is the compute function that will be invoked for each graph

@@ -20,7 +20,7 @@ type InMemoryGraph struct {
 	linkEdgeMap  map[uuid.UUID]edgeList
 }
 
-// NewInMemoryGraph creates a new in-memory link graph.
+// NewInMemoryGraph creates a new in-memindex link graph.
 func NewInMemoryGraph() *InMemoryGraph {
 	return &InMemoryGraph{
 		links:        make(map[uuid.UUID]*graph.Link),
