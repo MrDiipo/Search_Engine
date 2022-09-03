@@ -2,8 +2,10 @@ package crawler
 
 import (
 	"Search_Engine/linkgraph/graph"
+	"Search_Engine/linkgraph/store/memory"
 	"Search_Engine/pipeline"
 	"Search_Engine/textindexer/index"
+	"Search_Engine/textindexer/store/memindex"
 	"context"
 	"github.com/google/uuid"
 	"net/http"
@@ -69,6 +71,7 @@ func NewCrawler(cfg Config) *Crawler {
 // assembleCrawlerPipeline creates the various stages of a crawler pipeline
 // using the options in cfg and assembles them into a pipeline instance.
 func assembleCrawlerPipeline(cfg Config) *pipeline.Pipeline {
+	indexer, _ := memindex.NewInMemoryBleveIndexer()
 	return pipeline.New(
 		pipeline.FixedWorkerPool(
 			newLinkFetcher(cfg.URLGetter, cfg.PrivateNetworkDetector),
@@ -77,8 +80,8 @@ func assembleCrawlerPipeline(cfg Config) *pipeline.Pipeline {
 		pipeline.NewFIFO(newLinkExtractor(cfg.PrivateNetworkDetector)),
 		pipeline.NewFIFO(newTextExtractor()),
 		pipeline.Broadcast(
-			newGraphUpdater(cfg.Graph),
-			newTextIndexer(cfg.Indexer),
+			newGraphUpdater(memory.NewInMemoryGraph()),
+			newTextIndexer(indexer),
 		),
 	)
 }

@@ -61,5 +61,5 @@ func (lf *linkFetcher) isPrivate(URL string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return lf.netDetector.isPrivate(u.Hostname())
+	return lf.netDetector.IsPrivate(u.Hostname())
 }

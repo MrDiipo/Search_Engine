@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	appName = "linksrus-monolith"
+	appName = "agneta-monolith"
 	appSha  = "populated-at-link-time"
 )
 
@@ -87,6 +87,7 @@ func setupServices(logger *logrus.Entry) (service.Group, error) {
 
 	flag.IntVar(&pageRankCfg.ComputeWorkers, "pagerank-num-workers", runtime.NumCPU(), "The number of workers to use for calculating PageRank scores (defaults to number of CPUs)")
 	flag.DurationVar(&pageRankCfg.UpdateInterval, "pagerank-update-interval", time.Hour, "The time between subsequent PageRank score updates")
+	flag.DurationVar(&pageRankCfg.ReIndexThreshold, "pagerank-reindex-threshold", 5*time.Hour, "The time between subsequent PageRank score updates")
 
 	linkGraphURI := flag.String("link-graph-uri", "in-memindex://", "The URI for connecting to the link-graph (supported URIs: in-memindex://, postgresql://user@host:26257/linkgraph?sslmode=disable)")
 	textIndexerURI := flag.String("text-indexer-uri", "in-memindex://", "The URI for connecting to the text indexer (supported URIs: in-memindex://, es://node1:9200,...,nodeN:9200)")

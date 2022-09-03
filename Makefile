@@ -1,11 +1,11 @@
 .PHONY: deps test lint lint-check-deps ci-check run-migrations
 
-deps:
-	@if [ "$(go mod help | echo 'no-mod')" = "no-mod" ] || [ "${GO111MODULE}" = "off" ]; then \
-		echo "[dep] fetching package dependencies";\
-		go get -u github.com/golang/dep/cmd/dep;\
-		dep ensure;\
-	fi
+#deps:
+#	@if [ "$(go mod help | echo 'no-mod')" = "no-mod" ] || [ "${GO111MODULE}" = "off" ]; then \
+#		echo "[dep] fetching package dependencies";\
+#		go get -u github.com/golang/dep/cmd/dep;\
+#		dep ensure;\
+#	fi
 
 test:
 	@echo "[go test] running tests and collecting coverage metrics"

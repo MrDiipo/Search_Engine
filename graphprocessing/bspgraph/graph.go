@@ -251,7 +251,7 @@ func (g *Graph) stepWorker() {
 			g.stepCompleteCh <- struct{}{}
 		}
 	}
-	g.wg.Done()
+	defer g.wg.Done()
 }
 
 // Reset the state of the graph

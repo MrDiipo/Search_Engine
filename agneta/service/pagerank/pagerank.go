@@ -71,6 +71,7 @@ func (cfg *Config) Validate() error {
 		err = multierror.Append(err, xerrors.Errorf("invalid value for update interval"))
 	}
 	if cfg.ReIndexThreshold == 0 {
+		//cfg.ReIndexThreshold = cfg.UpdateInterval
 		err = multierror.Append(err, xerrors.Errorf("invalid value for re-index threshold"))
 	}
 	if cfg.Logger == nil {

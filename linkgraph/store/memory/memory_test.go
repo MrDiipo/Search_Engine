@@ -2,7 +2,8 @@ package memory
 
 import (
 	"Search_Engine/linkgraph/graph"
-	"gopkg.in/check.v1"
+	_ "gopkg.in/check.v1"
+	gc "gopkg.in/check.v1"
 	"testing"
 )
 
@@ -10,11 +11,14 @@ type InMemoryTestSuite struct {
 	graph.SuiteBase
 }
 
-var _ = check.Suite(new(InMemoryTestSuite))
+var _ = gc.Suite(new(InMemoryGraphTestSuite))
 
-func (s *InMemoryTestSuite) setUpTest(c *check.C) {
-	s.SetGraph(NewInMemoryGraph())
+func Test(t *testing.T) { gc.TestingT(t) }
+
+type InMemoryGraphTestSuite struct {
+	graphtest.SuiteBase
 }
 
-// Register our test-suite with go test.
-func Test(t *testing.T) { check.TestingT(t) }
+func (s *InMemoryGraphTestSuite) SetUpTest(c *gc.C) {
+	s.SetGraph(NewInMemoryGraph())
+}

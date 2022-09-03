@@ -80,7 +80,7 @@ func (le *linkExtractor) retainLink(srcHost string, link *url.URL) bool {
 		return true
 	}
 	// Skip links that resolve to private netwoks
-	if isPrivate, err := le.netDetector.isPrivate(link.Host); err != nil || isPrivate {
+	if isPrivate, err := le.netDetector.IsPrivate(link.Host); err != nil || isPrivate {
 		return false
 	}
 	return true

@@ -1,8 +1,8 @@
-#include ../Makefile
+include ~/go/src/Search_Engine/Makefile
 
 .PHONY: dockerize push dockerize-and-push
 
-SHELL=cmd.exe -o pipefail
+SHELL=/bin/bash -o pipefail
 IMAGE = agneta-monolith
 SHA = $(shell git rev-parse --short HEAD)
 
@@ -10,17 +10,11 @@ ifeq ($(origin PRIVATE_REGISTRY),undefined)
 PRIVATE_REGISTRY := $(shell minikube ip 2>/dev/null):5000
 endif
 
-
-deps:
-	@if [ "$(go mod help | echo 'no-mod')" = "no-mod" ] || [ "${GO111MODULE}" = "off" ]; then \
-		echo "[dep] fetching package dependencies";\
-		go get -u github.com/golang/dep/cmd/dep;\
-		dep ensure;\
-	fi
-
 ifneq ($(PRIVATE_REGISTRY),)
 	PREFIX:=${PRIVATE_REGISTRY}/
 endif
+
+
 
 dockerize-and-push: dockerize push
 
