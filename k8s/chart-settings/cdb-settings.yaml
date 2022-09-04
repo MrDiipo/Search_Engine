@@ -1,0 +1,5 @@
+Resources:
+  requests:
+    cpu: "100m"
+    memory: "521Mi"
+Storage: "100Mi"
