@@ -1,69 +1,87 @@
-.PHONY: deps test lint lint-check-deps ci-check run-migrations
+.PHONY: help bootstrap-minikube purge deploy k8s-data-namespace helm-es-service helm-cdb-service dockerize-and-push
 
-deps:
-	@if [ "$(go mod help | echo 'no-mod')" = "no-mod" ] || [ "${GO111MODULE}" = "off" ]; then \
-		echo "[dep] fetching package dependencies";\
-		go get -u github.com/golang/dep/cmd/dep;\
-		dep ensure;\
+SHELL=/bin/bash -o pipefail
+ES_VERSION ?= 7.4.0
+CDB_VERSION ?= v19.1.5
+MINIKUBE_RAM ?= 5g
+MINIKUBE_CPUS ?= 3
+MINIKUBE_K8S_VERSION ?= 1.15.3
+MINIKUBE_DRIVER ?= virtualbox
+
+help:
+	@echo "Usage: make COMMAND"
+	@echo ""
+	@echo "Supported commands:"
+	@echo "- bootstrap-minikube : bootstrap minikube cluster and install required addons"
+	@echo "- deploy             : deploy a micro-service based full links 'R' us installation backed by CockroachDB and elastic search"
+	@echo "- purge              : delete links 'R' us deployment including backing databases"
+	@echo "- dockerize-and-push : dockerize and push all required images"
+	@echo ""
+
+bootstrap-minikube:
+	@echo "[minikube] bootstrapping (driver: ${MINIKUBE_DRIVER}, network-plugin: cni) cluster with kubernetes ${MINIKUBE_K8S_VERSION} and reserving ${MINIKUBE_RAM} of RAM and ${MINIKUBE_CPUS} CPU(s)"
+	@minikube start --vm-driver=${MINIKUBE_DRIVER} --network-plugin=cni --kubernetes-version=${MINIKUBE_K8S_VERSION} --memory=${MINIKUBE_RAM} --cpus=${MINIKUBE_CPUS} 2>&1 | sed -e "s/^/ | /g"
+	@echo "[helm] bootstrapping"
+	@helm init 2>&1 | sed -e  "s/^/ | /g"
+	@echo "[minikube] enabling addons: registry, ingress"
+	@(minikube addons enable registry 2>&1 || true) | sed -e "s/^/ | /g"
+	@(minikube addons enable ingress 2>&1 || true) | sed -e "s/^/ | /g"
+	@echo "[calico] installing manifests"
+	@kubectl apply -f https://docs.projectcalico.org/v3.10/manifests/calico.yaml 2>&1 | sed -e "s/^/ | /g"
+	@echo
+	@echo "IMPORTANT NOTICE:"
+	@echo "Please make sure to add '"`minikube ip`":5000' as a trusted"
+	@echo "insecure registry to your docker's configuration options and"
+	@echo "restart the docker daemon!"
+	@echo
+	@echo 'On Linux, you can do this by editing /etc/docker/daemon.json'
+	@echo 'and adding the following section:'
+	@echo '  {'
+	@echo '    "insecure-registries" : ['
+	@echo '      "'`minikube ip`':5000"'
+	@echo '    ]'
+	@echo '  }'
+	@echo
+	@echo 'On OSX and Windows you can right-click the docker icon, go to'
+	@echo '"preferences" and then click on the "Daemon" tab'
+
+purge:
+	@echo "[kubectl] removing helm deployments for CDB/ES"
+	@helm delete --purge es 2>&1 | sed -e 's/^/ | /g' || true
+	@helm delete --purge cdb 2>&1 | sed -e 's/^/ | /g' || true
+	@echo "[kubectl] removing remaining resources"
+	@kubectl delete -f . 2>&1 | sed -e 's/^/ | /g' || true
+
+deploy: k8s-data-namespace helm-es-service helm-cdb-service
+	@echo "[kubectl] deploying agneta"
+	@kubectl apply -f . 2>&1 | sed -e 's/^/ | /g'
+
+k8s-data-namespace:
+	@if [[ -z `kubectl get ns | grep data` ]]; then \
+		echo "[kubectl] applying namespace manifests";\
+		kubectl apply -f ./k8s/01-namespaces.yaml 2>&1 | sed -e  "s/^/ | /g";\
 	fi
 
-test:
-	@echo "[go test] running tests and collecting coverage metrics"
-	@go test -v -tags all_tests -race -coverprofile=coverage.txt -covermode=atomic ./...
-
-lint: lint-check-deps
-	@echo "[golangci-lint] linting sources"
-	@golangci-lint run \
-		-E misspell \
-		-E golint \
-		-E gofmt \
-		-E unconvert \
-		--exclude-use-default=false \
-		./...
-
-lint-check-deps:
-	@if [ -z `which golangci-lint` ]; then \
-		echo "[go get] installing golangci-lint";\
-		GO111MODULE=on go get -u github.com/golangci/golangci-lint/cmd/golangci-lint;\
+helm-es-service: k8s-data-namespace
+	@if [[ `kubectl -n agneta-data get pods -l release=es 2>/dev/null | wc -l` -eq '0' ]]; then \
+		echo "[helm] installing elasticsearch (${ES_VERSION})";\
+		echo "[helm] adding chart repos";\
+		helm repo add elastic https://helm.elastic.co 2>&1 | sed -e  "s/^/ | /g";\
+		helm install --namespace=agneta-data --name es \
+			--values ./k8s/chart-settings/es-settings.yaml \
+			--set imageTag=${ES_VERSION} \
+			elastic/elasticsearch 2>&1 | sed -e  "s/^/ | /g";\
 	fi
 
-ci-check: deps lint run-cdb-migrations test
-
-run-db-migrations: run-cdb-migrations
-
-# CH06: CockroachDB migrations
-.PHONY: run-cdb-migrations migrate-check-deps check-cdb-env
-
-run-cdb-migrations: migrate-check-deps check-cdb-env
-	migrate -source file://Chapter06/linkgraph/store/cdb/migrations -database '$(subst postgresql,cockroach,${CDB_DSN})' up
-
-migrate-check-deps:
-	@if [ -z `which migrate` ]; then \
-		echo "[go get] installing golang-migrate cmd with cockroachdb support";\
-		if [ "${GO111MODULE}" = "off" ]; then \
-			echo "[go get] installing github.com/golang-migrate/migrate/cmd/migrate"; \
-			go get -tags 'cockroachdb postgres' -u github.com/golang-migrate/migrate/cmd/migrate;\
-		else \
-			echo "[go get] installing github.com/golang-migrate/migrate/v4/cmd/migrate"; \
-			go get -tags 'cockroachdb postgres' -u github.com/golang-migrate/migrate/v4/cmd/migrate;\
-		fi \
+helm-cdb-service: k8s-data-namespace
+	@if [[ `kubectl -n agneta-data get pods -l release=cdb 2>/dev/null | wc -l` -eq '0' ]]; then \
+		echo "[helm] installing cockroackdb (${CDB_VERSION})";\
+		helm install --namespace=agneta-data --name cdb \
+			--values ./k8s/chart-settings/cdb-settings.yaml \
+			--set ImageTag=${CDB_VERSION} \
+			stable/cockroachdb 2>&1 | sed -e  "s/^/ | /g";\
 	fi
 
-
-define dsn_missing_error
-
-CDB_DSN envvar is undefined. To run the migrations this envvar
-must point to a cockroach db instance. For example, if you are
-running a local cockroachdb (with --insecure) and have created
-a database called 'linkgraph' you can define the envvar by
-running:
-
-export CDB_DSN='postgresql://root@localhost:26257/linkgraph?sslmode=disable'
-
-endef
-export dsn_missing_error
-
-check-cdb-env:
-ifndef CDB_DSN
-	$(error ${dsn_missing_error})
-endif
+dockerize-and-push:
+	@make -C ../cdb-schema dockerize-and-push
+	@make -C ../agneta dockerize-and-push

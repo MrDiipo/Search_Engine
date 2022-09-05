@@ -57,7 +57,7 @@ spec:
       containers:
         - name: agneta-monolith
           imagePullPolicy: Always
-          image: localhost:5000/agneta-monolith:latest
+          image: 07036716233/agneta-monolith:latest
           args:
             - "-crawler-update-interval=5m"
             - "-crawler-num-workers=64"
