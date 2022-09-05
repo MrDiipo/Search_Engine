@@ -47,14 +47,14 @@ bootstrap-minikube:
 
 purge:
 	@echo "[kubectl] removing helm deployments for CDB/ES"
-	@helm delete --purge es 2>&1 | sed -e 's/^/ | /g' || true
-	@helm delete --purge cdb 2>&1 | sed -e 's/^/ | /g' || true
+	@helm delete --purge es 2>&1 | sed -e "s/^/ | /g" || true
+	@helm delete --purge cdb 2>&1 | sed -e "s/^/ | /g"|| true
 	@echo "[kubectl] removing remaining resources"
-	@kubectl delete -f . 2>&1 | sed -e 's/^/ | /g' || true
+	@kubectl delete -f ./k8s 2>&1 | sed -e "s/^/ | /g"|| true
 
 deploy: k8s-data-namespace helm-es-service helm-cdb-service
 	@echo "[kubectl] deploying agneta"
-	@kubectl apply -f . 2>&1 | sed -e 's/^/ | /g'
+	@kubectl apply -f ./k8s 2>&1 | sed -e  "s/^/ | /g"
 
 k8s-data-namespace:
 	@if [[ -z `kubectl get ns | grep data` ]]; then \
